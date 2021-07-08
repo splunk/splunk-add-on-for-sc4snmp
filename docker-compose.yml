@@ -74,6 +74,7 @@ services:
       - SC4S_LISTEN_PFSENSE_UDP_PORT=5006
       - SC4S_ARCHIVE_GLOBAL=no
       - SC4S_LISTEN_CHECKPOINT_SPLUNK_NOISE_CONTROL=yes
+      - TEST_SC4S_ACTIVATE_EXAMPLES=yes
 
   socks5:
     image: serjs/go-socks5-proxy:latest
