@@ -22,3 +22,4 @@ coverage
 splunk-sdk
 future
 -r requirements_addon_specific.txt
+urllib3>=1.24.3 # not directly required, pinned by Snyk to avoid a vulnerability
