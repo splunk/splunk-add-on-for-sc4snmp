@@ -11,7 +11,7 @@ orbs:
     jobs:
       package:
         docker:
-          - image: circleci/buildpack-deps:stable
+          - image: circleci/buildpack-deps:oldstable
         resource_class: small
         steps:
           - checkout
