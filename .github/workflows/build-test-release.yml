@@ -170,14 +170,9 @@ jobs:
           path: snyk-scan_requirements.sarif
   build:
     name: build
-    needs:
-      - review_secrets
-      - snyk
-      - semgrep
-      #- lint
-      #- compliance-copyrights
-      - compliance-dependencies
     runs-on: ubuntu-latest
+    needs:
+      - compliance-dependencies
     outputs:
       buildname: ${{ steps.buildupload.outputs.name }}
     steps:
@@ -352,6 +347,10 @@ jobs:
            fi
           if [ ! -f requirements_dev.txt ]; then echo no requirements;exit 0 ;fi
           pip install -r requirements_dev.txt
+      - name: Create directories
+        run: |
+          mkdir -p /opt/splunk/var/log/splunk
+          chmod -R 777 /opt/splunk/var/log/splunk
       - name: Copy pytest ini
         run: cp tests/unit/pytest-ci.ini pytest.ini
       - name: Run Pytest with coverage
@@ -479,7 +478,6 @@ jobs:
   setup:
     needs:
       - build
-      - artifact-registry
       - test-inventory
     runs-on: ubuntu-18.04
     container:
@@ -538,7 +536,6 @@ jobs:
     if: ${{ needs.test-inventory.outputs.knowledge == 'true' }}
     needs:
       - build
-      - artifact-registry
       - test-inventory
       - setup
       - meta
@@ -620,14 +617,16 @@ jobs:
         if: always()
         run: |
           set -o xtrace
+          set +e
           if [[ "${{ steps.is-pod-deleted.outputs.retry-workflow }}" == "true" ]]
           then
             WORKFLOW_NAME=`argo resubmit -v -o json -n workflows ${{ steps.run-tests.outputs.workflow-name }} | jq -r .metadata.name`
             echo "::set-output name=workflow-name::$(echo $WORKFLOW_NAME)"
-            argo logs --follow ${WORKFLOW_NAME} -n workflows
+            argo logs --follow ${WORKFLOW_NAME} -n workflows || echo "... there was an error fetching logs, the workflow is still in progress. please wait for the workflow to complete ..."
           else
             echo "No retry required"
-            argo watch ${{ steps.run-tests.outputs.workflow-name }} -n workflows
+            argo wait ${{ steps.run-tests.outputs.workflow-name }} -n workflows
+            argo watch ${{ steps.run-tests.outputs.workflow-name }} -n workflows | grep "test-addon"
           fi
       - name: check if workflow completed
         env:
@@ -689,7 +688,6 @@ jobs:
     if: ${{ needs.test-inventory.outputs.requirement_test == 'true' }}
     needs:
       - build
-      - artifact-registry
       - test-inventory
       - setup
       - meta
@@ -770,14 +768,16 @@ jobs:
         if: always()
         run: |
           set -o xtrace
+          set +e
           if [[ "${{ steps.is-pod-deleted.outputs.retry-workflow }}" == "true" ]]
           then
             WORKFLOW_NAME=`argo resubmit -v -o json -n workflows ${{ steps.run-tests.outputs.workflow-name }} | jq -r .metadata.name`
             echo "::set-output name=workflow-name::$(echo $WORKFLOW_NAME)"
-            argo logs --follow ${WORKFLOW_NAME} -n workflows
+            argo logs --follow ${WORKFLOW_NAME} -n workflows || echo "... there was an error fetching logs, the workflow is still in progress. please wait for the workflow to complete ..."
           else
             echo "No retry required"
-            argo watch ${{ steps.run-tests.outputs.workflow-name }} -n workflows
+            argo wait ${{ steps.run-tests.outputs.workflow-name }} -n workflows
+            argo watch ${{ steps.run-tests.outputs.workflow-name }} -n workflows | grep "test-addon"
           fi
       - name: check if workflow completed
         env:
@@ -839,7 +839,6 @@ jobs:
     if: ${{ needs.test-inventory.outputs.ui == 'true' }}
     needs:
       - build
-      - artifact-registry
       - test-inventory
       - setup
       - meta
@@ -848,7 +847,7 @@ jobs:
       fail-fast: false
       matrix:
         splunk: ${{ fromJson(needs.meta.outputs.matrix_supportedSplunk) }}
-        browser: ["chrome", "firefox", "safari"]
+        browser: ["chrome"]
     container:
       image: ghcr.io/splunk/workflow-engine-base:2.0.3
     env:
@@ -920,14 +919,16 @@ jobs:
         if: always()
         run: |
           set -o xtrace
+          set +e
           if [[ "${{ steps.is-pod-deleted.outputs.retry-workflow }}" == "true" ]]
           then
             WORKFLOW_NAME=`argo resubmit -v -o json -n workflows ${{ steps.run-tests.outputs.workflow-name }} | jq -r .metadata.name`
             echo "::set-output name=workflow-name::$(echo $WORKFLOW_NAME)"
-            argo logs --follow ${WORKFLOW_NAME} -n workflows
+            argo logs --follow ${WORKFLOW_NAME} -n workflows || echo "... there was an error fetching logs, the workflow is still in progress. please wait for the workflow to complete ..."
           else
             echo "No retry required"
-            argo watch ${{ steps.run-tests.outputs.workflow-name }} -n workflows
+            argo wait ${{ steps.run-tests.outputs.workflow-name }} -n workflows
+            argo watch ${{ steps.run-tests.outputs.workflow-name }} -n workflows | grep "test-addon"
           fi
       - name: check if workflow completed
         env:
@@ -989,7 +990,6 @@ jobs:
     if: ${{ needs.test-inventory.outputs.modinput_functional == 'true' }}
     needs:
       - build
-      - artifact-registry
       - test-inventory
       - setup
       - meta
@@ -1070,14 +1070,16 @@ jobs:
         if: always()
         run: |
           set -o xtrace
+          set +e
           if [[ "${{ steps.is-pod-deleted.outputs.retry-workflow }}" == "true" ]]
           then
             WORKFLOW_NAME=`argo resubmit -v -o json -n workflows ${{ steps.run-tests.outputs.workflow-name }} | jq -r .metadata.name`
             echo "::set-output name=workflow-name::$(echo $WORKFLOW_NAME)"
-            argo logs --follow ${WORKFLOW_NAME} -n workflows
+            argo logs --follow ${WORKFLOW_NAME} -n workflows || echo "... there was an error fetching logs, the workflow is still in progress. please wait for the workflow to complete ..."
           else
             echo "No retry required"
-            argo watch ${{ steps.run-tests.outputs.workflow-name }} -n workflows
+            argo wait ${{ steps.run-tests.outputs.workflow-name }} -n workflows
+            argo watch ${{ steps.run-tests.outputs.workflow-name }} -n workflows | grep "test-addon"
           fi
       - name: check if workflow completed
         env:
@@ -1152,7 +1154,6 @@ jobs:
       - test-inventory
       - run-unit-tests
       - appinspect
-      - artifact-registry
       - setup
       - run-knowledge-tests
       - run-modinput-tests
@@ -1167,12 +1168,14 @@ jobs:
         shell: bash
         run: |
           RUN_PUBLISH=`echo $NEEDS | jq ".[] |  select(  ( .result != \"skipped\" ) and .result != \"success\" ) | length == 0"`
-          if [[ $RUN_PUBLISH != 'false' ]]
+          if [[ $RUN_PUBLISH != *'false'* ]]
           then
               echo "::set-output name=run-publish::true"
+          else
+              echo "::set-output name=run-publish::false"
           fi
       - name: exit without publish
-        if: ${{ steps.check.outputs.run-publish != 'true' }}
+        if: ${{ steps.check.outputs.run-publish == 'false' || github.event_name == 'pull_request'}}
         run: |
           echo " some test job failed. "
           exit 1
