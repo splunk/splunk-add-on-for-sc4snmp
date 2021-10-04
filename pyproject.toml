@@ -18,7 +18,7 @@ pytest-ordering = "^0.6"
 pytest-splunk-addon = "^1.9.0"
 pytest-expect = "^1.1.0"
 pytest-rerunfailures = "^10.1"
-coverage = "^5.5"
+coverage = "^6.0"
 splunk-sdk = "^1.6.16"
 splunk-packaging-toolkit = "^1.0.1"
 
