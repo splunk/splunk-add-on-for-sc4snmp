@@ -12,10 +12,10 @@ on:
 
 jobs:
   call-workflow:
-    uses: splunk/github-workflow-build-test-release/.github/workflows/reusable-build-test-release.yml@v1.0.0
+    uses: splunk/github-workflow-build-test-release/.github/workflows/reusable-build-test-release.yml@v1.0.1
     secrets:
       GH_TOKEN_ADMIN: ${{ secrets.GH_TOKEN_ADMIN }}
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       SEMGREP_PUBLISH_TOKEN: ${{ secrets.SEMGREP_PUBLISH_TOKEN }}
       SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
