@@ -9,7 +9,7 @@ license = "Splunk-1-2020"
 python = "^3.7"
 
 [tool.poetry.dev-dependencies]
-lovely-pytest-docker = "^0.2.1"
+lovely-pytest-docker = "^0.3.0"
 pytest-expect = "^1.1.0"
 pytest-rerunfailures = "^10.1"
 splunk-packaging-toolkit = "^1.0.1"
